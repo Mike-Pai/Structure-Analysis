@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,8 +76,8 @@ public class Calculation extends AppCompatActivity {
         float[][] K = new float[2*n][2*n];                               //K矩陣
         float[][] Coordinate = new float[n][2];                                     //點座標(Coordinate)
         for (int i = 0; i < n; i++) {
-            Coordinate[i][0] = (float)nodeS.get(checkn.get(i)).get(0);
-            Coordinate[i][1] = (float)nodeS.get(checkn.get(i)).get(1);
+            Coordinate[i][0] = (float)nodeS.get(checkn.get(i)).get(1);
+            Coordinate[i][1] = (float)nodeS.get(checkn.get(i)).get(2);
             Log.d("coordx",String.valueOf(Coordinate[i][0]));
             Log.d("coordy",String.valueOf(Coordinate[i][1]));
         }
@@ -126,6 +127,7 @@ public class Calculation extends AppCompatActivity {
             }
 
         }
+        float [][] Dp = {{0},{0},{0},{0},{0}};
         ArrayList<ArrayList> LandaXYMatrix =new ArrayList<>();
         ArrayList<ArrayList> LengthM =new ArrayList<>();
         try {
@@ -179,67 +181,133 @@ public class Calculation extends AppCompatActivity {
 
 
             int k2sum = 0;                                  //k2矩陣大小的計數器
-            for (int i = 0; i < (n); i++) {
-                for (int j = 0; j < 2; j++) {
-                    if (PointFreedom[i][j] == 1) {
+            for(int i =0 ; i < (n) ; i++) {
+                for(int j =0 ; j < 2 ; j++) {
+                    if(PointFreedom[i][j] == 1) {
                         k2sum = k2sum + 1;
                     }
                 }
             }
-
-            float[][] K2 = new float[k2sum][k2sum];        //k2=用來帶入LU矩陣的K矩陣
-            int t = 0;
-            int PFn[] = new int[k2sum];
-            for (int i = 0; i < PointFreedom.length; i++) { //紀錄接點可動的自由度
+            int Dpcount=0; //預位移數量
+            for(int i=0;i<Dp.length;i++){ //計算有多少個預位移
+                if(Dp[i][0]!=0){
+                    Dpcount=Dpcount+1;
+                }
+            }
+            //Log.d("Dp", String.valueOf(Dpcount));
+            float [][]K2 = new float[k2sum][k2sum];        //k2=用來帶入LU矩陣的K矩陣
+            int t=0; //PFn的計數器
+            int q=0; //PFn1的計數器
+            int w=0;
+            int PFn [] = new int[k2sum];    //可移動之點號矩陣
+            int PFn1 [] = new int[2*n-k2sum];   //不可移動之點號矩陣
+            int PFn2 [] = new int[Dpcount]; //有預位移的點之矩陣
+            for (int i = 0; i < PointFreedom.length; i++) { //紀錄接點可動與不可動的自由度
                 for (int j = 0; j < 2; j++) {
                     if (PointFreedom[i][j] == 1) {
-                        PFn[t] = 2 * i + j;
-                        t = t + 1;
+                        PFn[t]=2*i+j;
+                        t=t+1;
+                    }
+                    if (PointFreedom[i][j] == 0 || PointFreedom[i][j] == -1){
+                        PFn1[q]=2*i+j;
+                        q=q+1;
+                    }
+                    if (PointFreedom[i][j] == -1){
+                        PFn2[w]=2*i+j;
+                        w=w+1;
                     }
                 }
             }
-            for (int a = 0; a < K2.length; a++) {  //填入所需矩陣
+            for(int a=0;a<K2.length;a++) {  //填入所需矩陣
                 for (int b = 0; b < K2.length; b++) {
-                    K2[a][b] = K[PFn[a]][PFn[b]];
+                    K2[a][b]=K[PFn[a]][PFn[b]];
                 }
             }
 
-        /*for (int i=0;i<K.length;i++) {
-            for (int j = 0; j < K.length; j += 6) {
-                Log.w("K",K[i][j]+","+K[i][j+1]+","+K[i][j+2]+","+K[i][j+3]+","+K[i][j+4]+","+K[i][j+5]+","+"\n");
-            }
-        }
-        for (int i=0;i<K2.length;i++) {
-            for (int j = 0; j < K2.length; j += 2) {
-                Log.w("K2",K2[i][j]+","+K2[i][j+1]+","+"\n");
+       /* for (int i=0;i<K2.length;i++) {
+            for (int j = 0; j < K2.length; j += 4) {
+                textView2.setText(textView2.getText().toString()+K2[i][j]+","+K2[i][j+1]+","+K2[i][j+2]+","+K2[i][j+3]+","+"\n");
             }
         }
         */
+            float [][] LessDp = new float[k2sum][2*n-k2sum]; //暫存矩陣(存有m乘n，m為可移動之點號,n為不可移動之點號)
+            float [][] StoreLDp; //用來存預位移產生之力效應，欲使用來相減的矩陣
+            f:for(int a =0 ; a < PointFreedom.length ; a++) { //將預位移產生的效應消去
+                for (int b = 0; b < 2; b++) {
+                    if (PointFreedom[a][b] == -1){
+                        for(int a1=0;a1<LessDp.length;a1++) {  //填入所需矩陣
+                            for (int b1 = 0; b1 < 2*n-k2sum; b1++) {
+                                LessDp[a1][b1] = K[PFn[a1]][PFn1[b1]];
+                            }
+                        }
+                        StoreLDp=MMultiply(LessDp,Dp,k2sum,2*n-k2sum,1);
+                        for(int i=0;i<F.length;i++){
+                            F[i][0] = (F[i][0]/Material[0][0])-StoreLDp[i][0];
+                        }
+                        break f;
+                    }
+                }
+            }
+        /*for (int i=0;i<LessDp.length;i++) {
+            for (int j=0;j<2*n-k2sum;j++)
+            Log.d("LessDp",String.valueOf(LessDp[i][j]));
+        }
+        for(int i=0;i<F.length;i++){
+            Log.d("F",String.valueOf(F[i][0]));
+        }
+        for(int i=0;i<PFn2.length;i++){
+            Log.d("PFn2",String.valueOf(PFn2[i]));
+        }
+        */
 
-            float[][] d = LU(K2, F, k2sum, k2sum); //LU計算反矩陣
-            float[][] D = new float[2 * n][1];
-            int t1 = 0;
-            int t2 = 0;
-            for (int i = 0; i < D.length; i++) {
-                for (int j = t2; j < PFn.length; j++) {
-                    if (i != PFn[j]) {
-                        D[i][0] = 0;
+            //Log.d("k2sum",String.valueOf(k2sum));
+
+            float[][] d=LU(K2,F,k2sum,k2sum); //紀錄可動自由度之位移
+            float [][] D=new  float[2*n][1]; //全部點的位移，用來算出最終之結果
+            int t1=0;   //解出可動自由度位移後(d矩陣)，d的計數器
+            int t2=0;   //PFn的計數器，目的是要讓第二個迴圈可接續前面的順序
+            for (int i=0;i<D.length;i++){ //填入算出之d(位移)
+                for(int j=t2;j<PFn.length;j++){
+                    if(i!=PFn[j]){
+                        D[i][0]=0;
                         break;
                     }
-                    if (i == PFn[j]) {
-                        D[i][0] = d[t1][0];
-                        t2 = t2 + 1;
-                        t1 = t1 + 1;
+                    if(i==PFn[j]){
+                        D[i][0]=d[t1][0];
+                        t2=t2+1;
+                        t1=t1+1;
                         break;
                     }
                 }
-
             }
-            for (int i = 0; i < D.length; i++) {
-                Log.i("D", D[i][0] + ",");
+            int t3=0;   //PFn2的計數器，目的用以接續迴圈
+            for(int i=0;i<D.length;i++){ //將預位移填回
+                for (int j=t3;j<PFn2.length;j++){
+                    if (i == PFn2[j]){
+                        for(int k=t3;k<Dp.length;k++){
+                            if (Dp[k][0]!=0){
+                                D[i][0]=Dp[k][0];
+                                t3=t3+1;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
             }
-
-            float[][] Q = MMultiply(K, D, 2 * n, 2 * n, 1); //顯示各點受力
+        /*for(int i=0;i<D.length;i++){
+            Log.d("D",String.valueOf(D[i][0]));
+        }
+        */
+            float [][] Q =MMultiply(K,D,2*n,2*n,1);
+            for(int i=0;i<Dp.length;i++){
+                if(Dp[i][0]!=0){
+                    for(int j=0;j<Q.length;j++){ //乘上材料系數
+                        Q[i][0]=Q[i][0]*Material[0][0];
+                    }
+                    break;
+                }
+            }
             int num = 0;
             int newi = 1;
             TextView title = new TextView(this);
@@ -251,9 +319,8 @@ public class Calculation extends AppCompatActivity {
                 TextView calaview = new TextView(this);
                 calaview.setTextSize(18);
                 if (Float.isNaN(Q[i][0])) {
-                    title.setText("此桿件不存在，請重新計算!!");
-                    calaroot.addView(calaview);
-                    break;
+                    Toast.makeText(Calculation.this,"此桿件不存在!!",Toast.LENGTH_SHORT).show();
+                    Calculation.this.finish();
                 }
                 if (num == 1) {
                     calaview.setText("Node" + newi + "    X : " + calaview.getText().toString() + Q[i][0] + "N");
@@ -314,11 +381,9 @@ public class Calculation extends AppCompatActivity {
                 calaview.setText("Element" + (i+1) + " : " + calaview.getText().toString() + InternalForceM.get(i).get(0) + "\n");
                 calaroot1.addView(calaview);
             }
-        }catch (ArrayIndexOutOfBoundsException e) {
-            TextView title = new TextView(this);
-            title.setTextSize(18);
-            title.setText("結構不完整(可能有多餘之點)，請完整畫出桿件!!");
-            calaroot.addView(title);
+        }catch (ArrayIndexOutOfBoundsException e){
+            Toast.makeText(Calculation.this,"桿件不完整(可能有多餘的點)!!",Toast.LENGTH_SHORT).show();
+            Calculation.this.finish();
         }
 
 
@@ -377,7 +442,7 @@ public class Calculation extends AppCompatActivity {
         }
         for(int i=0;i<K1.length;i++) {
             for(int j=0;j<K1.length;j++)
-            Log.d("K1",K1[i][j]+",");
+                Log.d("K1",K1[i][j]+",");
         }
         for(int i=0;i<X.length;i++) {
             Log.d("X",X[i][0]+",");
