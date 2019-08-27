@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/Array"
+        app:showAsAction="never"
+        android:title="@string/Array"/>
+
+    <item
+        android:id="@+id/clear"
+        app:showAsAction="never"
+        android:title="@string/Clear"/>
+    <item
+        android:id="@+id/calculation"
+        app:showAsAction="never"
+        android:title="@string/calculation" />
+
+    <item
+        android:id="@+id/action_point"
+        android:icon="@drawable/ic_action_point"
+        android:title="@string/point"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/action_dot"
+                android:icon="@drawable/ic_action_dot"
+                android:title="@string/Dot"
+                app:showAsAction="ifRoom|withText"
+                />
+            <item
+                android:id="@+id/action_support"
+                android:icon="@drawable/ic_home_black_24dp"
+                android:title="@string/support"
+                app:showAsAction="ifRoom|withText"
+                >
+                <menu>
+                    <item
+                        android:id="@+id/action_pin"
+                        android:title="@string/pin"
+                        app:showAsAction="ifRoom"
+                        />
+                    <item
+                        android:id="@+id/action_roller"
+                        android:title="@string/roller"
+                        app:showAsAction="ifRoom"
+                        >
+                        <menu>
+                            <item
+                                android:id="@+id/VerticalRoller"
+                                android:title="@string/verroller"
+                                app:showAsAction="ifRoom"/>
+                            <item
+                                android:id="@+id/HorizentalRoller"
+                                android:title="@string/horroller"
+                                app:showAsAction="ifRoom"/>
+                        </menu>
+                    </item>
+                    <item
+                        android:id="@+id/action_fix"
+                        android:title="@string/fix"
+                        app:showAsAction="ifRoom"
+                        />
+                </menu>
+            </item>
+            <item
+                android:id="@+id/action_write"
+                android:icon="@drawable/baseline_create_black_24"
+                android:title="@string/write"
+                app:showAsAction="ifRoom|withText"
+                />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/action_element"
+        android:icon="@drawable/ic_action_shen"
+        android:title="@string/Element"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/action_truss"
+                android:icon="@drawable/ic_action_ele03"
+                android:title="@string/truss"
+                app:showAsAction="ifRoom|withText" />
+            <item
+                android:id="@+id/action_beam"
+                android:icon="@drawable/ic_action_ele01"
+                android:title="@string/beam"
+                app:showAsAction="ifRoom|withText" />
+            <item
+                android:id="@+id/action_test"
+                android:title="@string/Test"
+                app:showAsAction="ifRoom|withText" />
+        </menu>
+
+    </item>
+    <item
+        android:id="@+id/action_force"
+        android:icon="@drawable/ic_action_force"
+        android:title="@string/force"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/action_F"
+                android:title="@string/addforce"
+                app:showAsAction="ifRoom|withText" />
+            <item
+                android:id="@+id/action_M"
+                android:title="@string/moment"
+                app:showAsAction="ifRoom|withText" />
+        </menu>
+    </item>
+
+</menu>
